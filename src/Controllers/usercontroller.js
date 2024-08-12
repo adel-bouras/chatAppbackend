@@ -1,12 +1,11 @@
 const bcrypt = require('bcrypt');
 const generateToken = require('./../Utils/generateToken');
 const User = require('./../Models/userModel');
+const Room = require('./../Models/roomModel');
 const asyncwrapper = require('./../Middlewares/asyncwrapper');
 const appError = require('./../Utils/appError');
 
 const login = asyncwrapper(async (req, res, next)=>{
-    console.log(2003);
-    
     const {email , password} = req.body;
 
     const user = await User.findOne({email : email});
@@ -67,9 +66,14 @@ res.status(201).json({
 })
 });
 
+const rooms = asyncwrapper(async (req , res , next)=>{
+    const rooms = await Room.find({});
+    res.status(201).json({data : rooms});
+})
 
 module.exports = {
     login,
     register,
-    logout
+    logout,
+    rooms
 }

@@ -10,5 +10,7 @@ userRouter.post('/register' , userController.register);
 
 userRouter.post('/logout' , verifyToken , userController.logout);
 
+userRouter.get('/rooms' , verifyToken , userController.rooms);
+
 
 module.exports = userRouter;

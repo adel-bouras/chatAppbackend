@@ -1,52 +1,69 @@
 const Room = require('./../Models/roomModel');
 const User = require('./../Models/userModel');
 
-
 module.exports = (io)=>{
     io.on('connection', (socket) => {
-        socket.on('join', async (roomId) => {
-            try {
-                const theRoom = await Room.findById(roomId);
-                const userId = socket.user._id;
-                const user = await User.findById(userId);
+        console.log('a client connected');
+
+        socket.on('join' , async (data)=>{
+            try{
+                const room = await Room.findById(data.roomId);
+                const user = await User.findById(data.userId);
                 
-                if (!theRoom) {
-                    return socket.emit('error', 'Room not found');
-                }
-    
-                if (theRoom.users.includes(userId)) {
-                    return socket.emit('error', 'User already in the Room');
-                }
-    
-                theRoom.users.push(userId);
-                user.rooms.push(roomId);
+                room.users.push(user._id);
+                user.rooms.push(room._id);
                 
+                socket.join(room._id);
+                
+                io.to(room._id).emit('joined' , `${user.fullName} joined the room`);
+                
+                await room.save();
                 await user.save();
-                await theRoom.save();
-
-
-    
-                socket.join(roomId);
-                io.to(roomId).emit('message', `${socket.user.fullName} joined the Room`);
-    
-            } catch (error) {
-                socket.emit('error', 'Failed to join Room');
+            }catch(e){
+                socket.emit('error' , e);
             }
         });
-
-        socket.on('create' , ()=>{
-
-        })
-
-
-
-
-
-        socket.on('disconnect', () => {
-            socket.emit(`${socket.user.fullName} disconnected.`);
+        
+        socket.on('message' ,async (data)=>{
+            io.to(data.roomId).emit('message' , data.message);
+            const room = await Room.findById(data.roomId);
+            room.message.push(data.message);
         });
 
-        
+        socket.on('messages' , async (data)=>{
+            const room = await Room.findById(data.roomId);
+            const messages = room.messages;
+            socket.emit('messages' , messages);
+        });
+
+        socket.on('onTyping' , (data)=>{
+            socket.to(data.roomId).emit('onTyping' , `${data.fullName} is typing ...`);
+        });
+
+        socket.on('noTyping' , (data)=>{
+            socket.to(data.roomId).emit('noTyping' , '');
+        });
+
+        socket.on('create' , async (data)=>{
+            const room = new Room({
+                admin : data.userId,
+                users : [data.userId],
+                messages : []
+            });
+
+            await room.save();
+
+            const user = await findById(data.userId);
+
+            user.rooms.push(room._id);
+            
+            user.save();
+        })
+
+        socket.on('disconnect' , (data)=>{
+            console.log('user disconnected');
+            socket.to(data.roomId).emit('disconnect' , `${data.fullName} has disconnected`);
+        })
     });
 
 
