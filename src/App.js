@@ -25,7 +25,7 @@ const server = createServer(app);
 
 const io = new Server(server ,{
     cors : {
-        origin : 'https://adelchattapp.netlify.app',
+        origin : 'https://adelchattapp.netlify.app/',
     }
 });
 
