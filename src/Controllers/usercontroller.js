@@ -25,6 +25,7 @@ const login = asyncwrapper(async (req, res, next)=>{
     await user.save();
 
     res.status(201).json({
+        _id : user._id,
         fullName : user.fullName, 
         email : user.email, 
         token : user.token, 
@@ -56,7 +57,7 @@ const register = asyncwrapper(async (req, res, next)=>{
 
     await user.save();
 
-    res.status(201).json({fullName , email , token , rooms : user.rooms});
+    res.status(201).json({fullName , email , token ,_id : user._id , rooms : user.rooms});
 });
 
 const logout = asyncwrapper(async (req, res, next)=>{
@@ -68,12 +69,25 @@ res.status(201).json({
 
 const rooms = asyncwrapper(async (req , res , next)=>{
     const rooms = await Room.find({});
-    res.status(201).json({data : rooms});
+    const _ids = rooms.filter((_,i)=>rooms[i]._id);
+    res.status(201).json(_ids);
 })
+
+const messages = asyncwrapper(async (req , res , next)=>{
+    const room = await Room.findById(req.params._id);
+    if(room){
+        const messages = room.messages;
+        res.status(202).json({messages : messages});
+    }else{
+            console.log('room not found');
+    }
+    
+});
 
 module.exports = {
     login,
     register,
     logout,
-    rooms
+    rooms,
+    messages
 }

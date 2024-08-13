@@ -32,8 +32,13 @@ module.exports = (io)=>{
 
         socket.on('messages' , async (data)=>{
             const room = await Room.findById(data.roomId);
-            const messages = room.messages;
-            socket.emit('messages' , messages);
+            if(room){
+                room.messages = data.messages;
+                room.save();
+                socket.emit('messages' , {messages : room.message});
+            }else{
+                console.log('room problem');
+            }
         });
 
         socket.on('onTyping' , (data)=>{
@@ -50,19 +55,22 @@ module.exports = (io)=>{
                 users : [data.userId],
                 messages : []
             });
-
+            
             await room.save();
+            
+            socket.emit('create' , {roomId : room._id});
 
-            const user = await findById(data.userId);
+            const user = await User.findById(data.userId);
 
             user.rooms.push(room._id);
             
             user.save();
         })
-
+        
         socket.on('disconnect' , (data)=>{
             console.log('user disconnected');
-            socket.to(data.roomId).emit('disconnect' , `${data.fullName} has disconnected`);
+
+            socket.to(data.roomId).emit('message' , `${data.fullName} has disconnected`);
         })
     });
 

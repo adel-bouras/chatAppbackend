@@ -12,5 +12,7 @@ userRouter.post('/logout' , verifyToken , userController.logout);
 
 userRouter.get('/rooms' , verifyToken , userController.rooms);
 
+userRouter.get('/messages/:_id' , verifyToken , userController.messages);
+
 
 module.exports = userRouter;
